@@ -3,12 +3,25 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "test": "nyc --reporter=json-summary --reporter=text-summary mocha --require babel-polyfill --require babel-register --recursive --timeout 120000 test/*/*.js"
   },
   "dependencies": {
+    "babel-register":"^6.26.0",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
     "express": "~4.16.0",
-    "morgan": "~1.9.0"
+    "morgan": "~1.9.0",
+    "mysql": "^2.16.0",
+    "passport": "^0.4.0",
+    "passport-local": "^1.0.0",
+    "bcrypt": "^3.0.2"
+  },
+  "devDependencies": {
+    "nyc": "^13.1.0",
+    "unit.js": "^2.0.0",
+    "mocha": "^5.2.0",
+    "babel-polyfill": "^6.26.0",
+    "babel-register": "^6.26.0"
   }
 }
