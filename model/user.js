@@ -1,5 +1,4 @@
 const bcrypt = require("bcrypt");
-const databaseConnection = require("databaseConnection");
 
 module.exports = class User {
     constructor(username, password) {
@@ -7,28 +6,39 @@ module.exports = class User {
         this.password = password;
     }
 
-    setPlainPassword(plain,callback) {
-        User.hashPassword(plain,(hash) => {
-            if (hash !== false) {
+    async setPlainPassword(plain) {
+        return new Promise((resolve,reject)=>{
+            User.hashPassword(plain).then((hash)=>{
                 this.password = hash;
-                callback(hash)
-            }
-            else {
-                callback(false);
-            }
+                resolve(hash);
+            }).catch(()=>{
+                reject("Password hash not computed");
+            });
         });
     }
 
-    static hashPassword(text,callback) {
-        bcrypt.hash(text, 12, function(err, hash) {
-            (err) ? callback(false) : callback(hash);
+    static async hashPassword(text) {
+        return new Promise((resolve,reject) => {
+            bcrypt.hash(text, 12, (err, hash) => {
+                if(err) {
+                    reject(err);
+                }
+                else {
+                    resolve(hash);
+                }
+            });
         });
     }
 
-    isPasswordValid(otherPassword, callback) {
-        bcrypt.compare(otherPassword, this.password, function(err, res) {
-            callback(!err && res);
-        });
+    async isPasswordValid(otherPassword) {
+        return new Promise((resolve,reject)=>{
+            bcrypt.compare(otherPassword, this.password, function(err, res) {
+                (!err && res) ? reject() : resolve(true);
+            });
+        })
+    }
+
+    exists() {
 
     }
 };
