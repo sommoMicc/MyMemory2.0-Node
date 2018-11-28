@@ -1,9 +1,14 @@
 const test = require("unit.js");
-const dbConnection = require("../../model/databaseConnection");
+const DatabaseConnection = require("../../model/databaseConnection");
+const dbConnection = new DatabaseConnection();
 const User = require("../../model/user")(dbConnection);
 
 describe("User class test",() => {
-   it("Should create a new user ", (done) => {
+    before(async () => {
+       await dbConnection.connect();
+    });
+
+    it("Should create a new user ", (done) => {
        const username = "user";
        const password = "password";
 
@@ -11,9 +16,9 @@ describe("User class test",() => {
        user.username.must.be(username);
        user.password.must.be(password);
        done();
-   });
+    });
 
-   it("Should hash a password",(done)=>{
+    it("Should hash a password",(done)=>{
        const passwordToHash = "password";
        User.hashPassword(passwordToHash).then((hash) => {
            test.must(hash).not.be.empty();
@@ -21,9 +26,9 @@ describe("User class test",() => {
        }).catch((error)=>{
            console.log(error);
        })
-   });
+    });
 
-   it("Should save password hash", (done) => {
+    it("Should save password hash", (done) => {
        const username = "user";
        const password = "password";
 
@@ -35,9 +40,9 @@ describe("User class test",() => {
            hash.must.not.be.empty();
            done();
        });
-   });
+    });
 
-   it("Should compare hash correctly", (done) => {
+    it("Should compare hash correctly", (done) => {
        const username = "user";
        const password = "password";
 
@@ -53,7 +58,7 @@ describe("User class test",() => {
                done();
            });
        });
-   });
+    });
 
     it("Should throw an error comparing password", (done) => {
         const username = "user";
@@ -66,6 +71,10 @@ describe("User class test",() => {
             e.must.not.be.empty();
             done();
         });
-    })
+    });
+
+    after(() => {
+        dbConnection.terminate();
+    });
 
 });

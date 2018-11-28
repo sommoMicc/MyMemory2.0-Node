@@ -24,6 +24,12 @@ module.exports = class DatabaseConnection {
                 err ? reject() : resolve(true);
             });
         });
+    }
 
+    terminate() {
+        if(this.isConnected) {
+            this.connection.end();
+            this.isConnected = false;
+        }
     }
 };
