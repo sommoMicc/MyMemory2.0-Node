@@ -1,11 +1,12 @@
 const test = require("unit.js");
 const DatabaseConnection = require("../../model/databaseConnection");
 const dbConnection = new DatabaseConnection();
-const User = require("../../model/user")(dbConnection);
+let User = null;
 
 describe("User class test",() => {
     before(async () => {
        await dbConnection.connect();
+       User = require("../../model/user")(dbConnection.connection);
     });
 
     it("Should create a new user ", (done) => {
@@ -69,6 +70,14 @@ describe("User class test",() => {
 
         user.isPasswordValid(password).catch((e)=>{
             e.must.not.be.empty();
+            done();
+        });
+    });
+
+    it("Should say that user does not exists",(done)=> {
+        const user = new User(null,"F_A_K_E_!_U_S_E_R",null);
+        user.exists().then((result)=> {
+            result.must.be.false();
             done();
         });
     });
