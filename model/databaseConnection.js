@@ -1,17 +1,18 @@
 const mysql = require('mysql');
+const config = require("../config");
 
-module.exports = class DatabaseConnection {
-    constructor(host, username, password, database) {
-        this.host = host;
-        this.username = username;
-        this.password = password;
-        this.database = database;
+class DatabaseConnection {
+    constructor() {
+        this.host = config.database.host;
+        this.user = config.database.user;
+        this.password = config.database.password;
+        this.database = config.database.database;
     }
 
     connect(callback) {
         const connection = mysql.createConnection({
             host: this.host,
-            user: this.username,
+            user: this.user,
             password: this.password,
             database: this.database
         });
@@ -20,4 +21,7 @@ module.exports = class DatabaseConnection {
         });
 
     }
-};
+}
+
+let databaseConnection = new DatabaseConnection();
+module.exports = databaseConnection;

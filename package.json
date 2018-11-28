@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "test": "nyc --reporter=json-summary --reporter=text-summary mocha --require babel-polyfill --require babel-register --recursive --timeout 120000 test/*/*.js"
+    "test": "nyc mocha --require babel-polyfill --require babel-register --recursive --timeout 120000 test/*/*.js"
   },
   "dependencies": {
     "cookie-parser": "~1.4.3",
