@@ -1,12 +1,13 @@
 const test = require("unit.js");
-const User = require("../../model/user");
+const dbConnection = require("../../model/databaseConnection");
+const User = require("../../model/user")(dbConnection);
 
 describe("User class test",() => {
    it("Should create a new user ", (done) => {
        const username = "user";
        const password = "password";
 
-       let user = new User(username,password);
+       let user = new User(null,username,password);
        user.username.must.be(username);
        user.password.must.be(password);
        done();
@@ -16,11 +17,9 @@ describe("User class test",() => {
        const passwordToHash = "password";
        User.hashPassword(passwordToHash).then((hash) => {
            test.must(hash).not.be.empty();
-           console.log(hash);
            done();
        }).catch((error)=>{
            console.log(error);
-           //done();
        })
    });
 
@@ -28,7 +27,7 @@ describe("User class test",() => {
        const username = "user";
        const password = "password";
 
-       let user = new User(username,null);
+       let user = new User(null,username,null);
        user.username.must.be(username);
 
        user.setPlainPassword(password).then((hash)=> {
@@ -42,7 +41,7 @@ describe("User class test",() => {
        const username = "user";
        const password = "password";
 
-       let user = new User(username,null);
+       let user = new User(null,username,null);
        user.username.must.be(username);
 
        user.setPlainPassword(password).then((hash) => {
@@ -60,11 +59,11 @@ describe("User class test",() => {
         const username = "user";
         const password = "password";
 
-        let user = new User(username,password);
+        let user = new User(null,username,password);
         user.username.must.be(username);
 
-        user.isPasswordValid(password,(valid) => {
-            valid.must.be.false();
+        user.isPasswordValid(password).catch((e)=>{
+            e.must.not.be.empty();
             done();
         });
     })
