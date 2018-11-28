@@ -1,4 +1,5 @@
 const bcrypt = require("bcrypt");
+const databaseConnection = require("databaseConnection");
 
 module.exports = class User {
     constructor(username, password) {
@@ -30,4 +31,4 @@ module.exports = class User {
         });
 
     }
-}
+};
