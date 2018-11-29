@@ -86,6 +86,7 @@ module.exports = (db) => {
             if (err) return reject(err);
             if(result.length < 1) return reject("User does not exists");
             this._updateFromObject(result[0]);
+            resolve(result[0]);
         }
 
 
@@ -100,7 +101,7 @@ module.exports = (db) => {
                 this.exists().then((result)=>{
                     if(result === false) {
                         this._insert().then(()=>{
-                            resolve();
+                            resolve(true);
                         }).catch((e)=>{
                             reject(e);
                         });
@@ -108,7 +109,7 @@ module.exports = (db) => {
                     else {
                         this.ID = result;
                         this._update().then(()=>{
-                            resolve();
+                            resolve(true);
                         }).catch((e)=>{
                             reject(e);
                         });
@@ -119,7 +120,7 @@ module.exports = (db) => {
 
         async _insert() {
             return new Promise((resolve,reject) => {
-                db.query("INSERT INTO users (username, password) VALUES (?,?,?)",
+                db.query("INSERT INTO users (username, password) VALUES (?,?)",
                     [this.username, this.password], (err, result) => {
                         if(err) return reject(err);
                         this.ID = result.insertedId;
