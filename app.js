@@ -27,6 +27,10 @@ dbConnection.connect().then((a,b) => {
         app.use('/users/', usersRouter(dbConnection));
         app.use('/', indexRouter);
     }
+}).catch((a)=> {
+    console.log("Errore di connessione al database");
+    console.log(a);
+    process.exit(0);
 });
 
 module.exports = app;

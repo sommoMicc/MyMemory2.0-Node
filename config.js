@@ -2,8 +2,8 @@ var config = {
     database: {
         host: "localhost",
         user: "memory",
-        password: "myMemory",
-        database: "MyMemory"
+        password: "letsMemory",
+        database: "LetsMemory"
     }
 };
 
