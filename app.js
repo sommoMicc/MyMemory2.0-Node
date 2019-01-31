@@ -4,11 +4,10 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var bodyParser = require("body-parser");
 
-const DatabaseConnection = require("./model/databaseConnection");
+const DatabaseConnection = require("./model/db/databaseConnection");
 const dbConnection = new DatabaseConnection();
 
 var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
 
 var app = express();
 
@@ -24,8 +23,7 @@ dbConnection.connect().then((a,b) => {
         process.exit(1);
     }
     else {
-        app.use('/users/', usersRouter(dbConnection));
-        app.use('/', indexRouter);
+        app.use('/', indexRouter(dbConnection));
     }
 }).catch((a)=> {
     console.log("Errore di connessione al database");

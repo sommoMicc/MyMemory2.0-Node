@@ -1,5 +1,5 @@
 const test = require("unit.js");
-const DatabaseConnection = require("../../model/databaseConnection");
+const DatabaseConnection = require("../../model/db/databaseConnection");
 
 describe("Database Connection class test",() => {
     it("Should connect to database ", (done) => {

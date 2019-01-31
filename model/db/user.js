@@ -1,43 +1,10 @@
-const bcrypt = require("bcrypt");
-
 module.exports = (db) => {
 
     return class User {
-        constructor(id, username, password = null) {
+        constructor(id, username=null, email=null) {
             this.ID = (id != null && parseInt(id)) > 0 ? parseInt(id) : null;
             this.username = username;
-            this.password = password;
-        }
-
-        async setPlainPassword(plain) {
-            return new Promise((resolve, reject) => {
-                User.hashPassword(plain).then((hash) => {
-                    this.password = hash;
-                    resolve(hash);
-                }).catch(() => {
-                    reject("Password hash not computed");
-                });
-            });
-        }
-
-        static async hashPassword(text) {
-            return new Promise((resolve, reject) => {
-                bcrypt.hash(text, 12, (err, hash) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(hash);
-                    }
-                });
-            });
-        }
-
-        async isPasswordValid(otherPassword) {
-            return new Promise((resolve, reject) => {
-                bcrypt.compare(otherPassword, this.password, function (err, res) {
-                    (!err && res) ? resolve(true) : reject("Password not valid");
-                });
-            })
+            this.email = email;
         }
 
         async exists() {
@@ -64,6 +31,17 @@ module.exports = (db) => {
             });
         }
 
+        async emailExists() {
+            return new Promise((resolve,reject)=> {
+                db.query("SELECT ID FROM users WHERE email = ?",
+                    [this.email],(err,result) => {
+
+                        if(err) reject(err);
+                        resolve(result.length === 0 ? false : result[0]["ID"]);
+                    });
+            });
+        }
+
 
         async load() {
             return new Promise((resolve,reject)=> {
@@ -74,8 +52,8 @@ module.exports = (db) => {
                         });
                 }
                 else {
-                    db.query("SELECT * FROM users WHERE username = ?",
-                        [this.username], (err, result) => {
+                    db.query("SELECT * FROM users WHERE username = ? or email = ?",
+                        [this.username,this.email], (err, result) => {
                             this._loadCallback(err, result, resolve, reject);
                         });
                 }
@@ -93,7 +71,7 @@ module.exports = (db) => {
         _updateFromObject(object) {
             this.ID = object.ID;
             this.username = object.username;
-            this.password = object.password;
+            this.email = object.email;
         }
 
         async save() {
@@ -120,8 +98,8 @@ module.exports = (db) => {
 
         async _insert() {
             return new Promise((resolve,reject) => {
-                db.query("INSERT INTO users (username, password) VALUES (?,?)",
-                    [this.username, this.password], (err, result) => {
+                db.query("INSERT INTO users (username, email) VALUES (?,?)",
+                    [this.username, this.email], (err, result) => {
                         if(err) return reject(err);
                         this.ID = result.insertedId;
                         resolve(true);
@@ -131,7 +109,7 @@ module.exports = (db) => {
 
         async _update() {
             return new Promise((resolve,reject) => {
-                db.query("UPDATE users SET username = ?, password = ? WHERE ID = ?"
+                db.query("UPDATE users SET username = ?, email = ? WHERE ID = ?",
                     [this.username, this.password, this.ID], (err) => {
                         if(err) return reject(err);
                         resolve(true);
