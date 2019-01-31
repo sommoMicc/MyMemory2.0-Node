@@ -8,7 +8,7 @@ var config = {
     SERVER_PROTOCOL: "https",
     SERVER_URL: "tagliabuemichele.homepc.it:8080",
 
-    getBaseURL: () => this.SERVER_PROTOCOL+"://"+this.SERVER_URL,
+    getBaseURL: function() {return this.SERVER_PROTOCOL+"://"+this.SERVER_URL},
 
     mail: {
         SMTP_HOST: "smtp.gmail.com",

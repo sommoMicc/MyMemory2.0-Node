@@ -101,7 +101,9 @@ module.exports = (db) => {
                 db.query("INSERT INTO users (username, email) VALUES (?,?)",
                     [this.username, this.email], (err, result) => {
                         if(err) return reject(err);
-                        this.ID = result.insertedId;
+                        console.log("Risultato insert user");
+                        console.log(result);
+                        this.ID = result.insertId;
                         resolve(true);
                     });
             });

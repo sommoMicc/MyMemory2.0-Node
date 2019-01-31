@@ -47,7 +47,7 @@ module.exports = (db) => {
 
         static async _generateToken() {
             return new Promise((resolve,reject)=>{
-                crypto.randomBytes(48, function(err, buffer) {
+                crypto.randomBytes(36, function(err, buffer) {
                     if(err) reject(err);
                     else resolve(buffer.toString('hex'));
                 });
@@ -89,7 +89,7 @@ module.exports = (db) => {
 
         async save() {
             return new Promise((resolve,reject)=>{
-                this.exists().then((result)=>{
+                this.isValid().then((result)=>{
                     if(result === false) {
                         this._insert().then(()=>{
                             resolve(true);
