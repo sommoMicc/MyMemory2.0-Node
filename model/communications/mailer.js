@@ -54,6 +54,18 @@ class LetsMemoryMailer {
     sendSignupMail(to,token,callback) {
         const link = config.getBaseURL()+"/login/"+token;
 
+        const subject = "Registrazione in LetsMemory";
+        const text = "Completa la registrazione in LetsMemory aprendo questo link: \n" +
+            link;
+        const html =  "<p>Effettua il login in LetsMemory aprendo questo link: " +
+            "<br><a href='"+link+"'>"+link+"</a></p>";
+
+        this.sendMail(to,subject,text,html,callback);
+    }
+
+    sendLoginMail(to,token,callback) {
+        const link = config.getBaseURL()+"/login/"+token;
+
         const subject = "Login in LetsMemory";
         const text = "Effettua il login in LetsMemory aprendo questo link: \n" +
             link;

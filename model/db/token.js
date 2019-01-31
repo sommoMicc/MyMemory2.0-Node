@@ -130,7 +130,19 @@ module.exports = (db) => {
                         resolve(true);
                     });
             });
+        }
 
+        //Fa scadere tutti i token associati ad uno userID
+        static async cleanTokens(userID) {
+            return new Promise((resolve,reject) => {
+                db.query("UPDATE tokens SET expiration = NOW() WHERE " +
+                    "user = ? AND (expiration IS NULL OR expiration > NOW())",
+                    [userID],
+                    (err) => {
+                        if(err) return reject(err);
+                        resolve(true);
+                    });
+            });
         }
     }
 };

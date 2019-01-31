@@ -4,7 +4,7 @@ module.exports = (db) => {
         constructor(id, username=null, email=null) {
             this.ID = (id != null && parseInt(id)) > 0 ? parseInt(id) : null;
             this.username = username;
-            this.email = email;
+            this.email = email == null ? null : email.toLowerCase();
         }
 
         async exists() {
@@ -35,7 +35,6 @@ module.exports = (db) => {
             return new Promise((resolve,reject)=> {
                 db.query("SELECT ID FROM users WHERE email = ?",
                     [this.email],(err,result) => {
-
                         if(err) reject(err);
                         resolve(result.length === 0 ? false : result[0]["ID"]);
                     });
@@ -52,8 +51,8 @@ module.exports = (db) => {
                         });
                 }
                 else {
-                    db.query("SELECT * FROM users WHERE username = ? or email = ?",
-                        [this.username,this.email], (err, result) => {
+                    db.query("SELECT * FROM users WHERE username = ? OR email = ?",
+                        [this.username,this.email.toLowerCase()], (err, result) => {
                             this._loadCallback(err, result, resolve, reject);
                         });
                 }
@@ -71,7 +70,7 @@ module.exports = (db) => {
         _updateFromObject(object) {
             this.ID = object.ID;
             this.username = object.username;
-            this.email = object.email;
+            this.email = object.email.toLowerCase();
         }
 
         async save() {
@@ -99,7 +98,7 @@ module.exports = (db) => {
         async _insert() {
             return new Promise((resolve,reject) => {
                 db.query("INSERT INTO users (username, email) VALUES (?,?)",
-                    [this.username, this.email], (err, result) => {
+                    [this.username, this.email.toLowerCase()], (err, result) => {
                         if(err) return reject(err);
                         console.log("Risultato insert user");
                         console.log(result);
@@ -112,7 +111,7 @@ module.exports = (db) => {
         async _update() {
             return new Promise((resolve,reject) => {
                 db.query("UPDATE users SET username = ?, email = ? WHERE ID = ?",
-                    [this.username, this.password, this.ID], (err) => {
+                    [this.username, this.email.toLowerCase(), this.ID], (err) => {
                         if(err) return reject(err);
                         resolve(true);
                     });
