@@ -117,5 +117,17 @@ module.exports = (dbConnection) => {
         });
 
     });
+
+    router.get("/.well-known/assetlinks.json",(req,res)=>{
+        res.send([{
+            relation: ["delegate_permission/common.handle_all_urls"],
+            target: {
+                namespace: "android_app",
+                package_name: "com.micheletagliabue.letsmemory",
+                sha256_cert_fingerprints: ["prova"]
+            }
+        }]);
+    });
+
     return router;
 };
