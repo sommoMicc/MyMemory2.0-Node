@@ -82,9 +82,10 @@ module.exports = (db) => {
 
 
         _updateFromObject(object) {
-            this.ID = object.ID;
-            this.username = object.username;
-            this.email = object.email;
+            this.value = object.value;
+            this.user_id = object.user;
+            this.creation = object.creation;
+            this.expiration = object.expiration;
         }
 
         async save() {

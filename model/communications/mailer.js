@@ -51,8 +51,14 @@ class LetsMemoryMailer {
         });
     }
 
-    sendSignupMail(to,token,callback) {
-        const link = config.getBaseURL()+"/login/"+token;
+    _getLoginURL(token,platform) {
+        return (platform === "IOS" ? config.getIOSURL() :
+            config.getBaseURL())+"/login/do?t="+token;
+    }
+
+    sendSignupMail(to,platform,token,callback) {
+
+        const link = this._getLoginURL(token,platform);
 
         const subject = "Registrazione in LetsMemory";
         const text = "Completa la registrazione in LetsMemory aprendo questo link: \n" +
@@ -63,8 +69,8 @@ class LetsMemoryMailer {
         this.sendMail(to,subject,text,html,callback);
     }
 
-    sendLoginMail(to,token,callback) {
-        const link = config.getBaseURL()+"/login/"+token;
+    sendLoginMail(to,platform,token,callback) {
+        const link = this._getLoginURL(token,platform);
 
         const subject = "Login in LetsMemory";
         const text = "Effettua il login in LetsMemory aprendo questo link: \n" +

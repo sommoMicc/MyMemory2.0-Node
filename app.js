@@ -3,6 +3,7 @@ var express = require('express');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var bodyParser = require("body-parser");
+var morgan = require('morgan');
 
 const DatabaseConnection = require("./model/db/databaseConnection");
 const dbConnection = new DatabaseConnection();

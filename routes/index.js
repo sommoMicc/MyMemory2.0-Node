@@ -3,6 +3,7 @@ var messages = require("../model/communications/message");
 var mailer = require("../model/communications/mailer");
 
 var router = express.Router();
+var config = require("../config");
 
 module.exports = (dbConnection) => {
     const User = require("../model/db/user")(dbConnection.connection);
@@ -48,6 +49,7 @@ module.exports = (dbConnection) => {
                 return;
             }
             console.log(newUser);
+            const platform = req.body.platform.trim().toUpperCase();
 
             let token = await Token.generate(newUser.ID);
             if(!token) {
@@ -57,7 +59,7 @@ module.exports = (dbConnection) => {
             }
             console.log(token);
 
-            LetsMemoryMailer.sendSignupMail(newUser.email,token.value,(e,r)=>{
+            LetsMemoryMailer.sendSignupMail(newUser.email,platform,token.value,(e,r)=>{
                 if(e) {
                     res.send(messages.error("Si è verificato un problema tecnico nella " +
                         "registrazione 3. Per favore riprova più tardi."));
@@ -80,6 +82,7 @@ module.exports = (dbConnection) => {
         let email = req.body.email;
         if(email == null || email.trim().length === 0) {
             res.send(messages.error("Inserire un'email valida."));
+            return;
         }
         //Controllo se esiste un utente associato a quella email
         let user = new User(null,null,email);
@@ -89,6 +92,9 @@ module.exports = (dbConnection) => {
             res.send(messages.error("Non esiste nessun account associato a questa email. Prova a registrarti."));
             return;
         }
+
+        const platform = req.body.platform.trim().toUpperCase();
+
         //Carico l'utente dal database
         user.ID = userID;
         await user.load();
@@ -104,7 +110,7 @@ module.exports = (dbConnection) => {
         }
         console.log(token);
 
-        LetsMemoryMailer.sendLoginMail(user.email,token.value,(e,r)=>{
+        LetsMemoryMailer.sendLoginMail(user.email,platform,token.value,(e,r)=>{
             if(e) {
                 res.send(messages.error("Si è verificato un problema tecnico nel " +
                     "login 2. Per favore riprova più tardi."));
@@ -118,15 +124,62 @@ module.exports = (dbConnection) => {
 
     });
 
+    router.post('/finishLogin', async function(req, res) {
+        let tokenValue = req.body.token;
+        if(tokenValue == null || tokenValue.trim().length === 0) {
+            res.send(messages.error("Token non presente."));
+            return;
+        }
+        tokenValue = tokenValue.trim();
+        let token = new Token(tokenValue);
+        if(!await token.isValid()) {
+            res.send(messages.error("Token non valido o scaduto."));
+            return;
+        }
+        //Ricreo un nuovo token "definitivo"
+        await token.load();
+        console.log("Token: ");
+        console.log(token);
+        let user = await token.getUser();
+        console.log(user);
+        //Pulisco tutti i vecchi token e ne ricreo un altro
+        await Token.cleanTokens(user.ID);
+        token = await Token.generate(user.ID);
+
+        if(!token) {
+            res.send(messages.error("Errore nella ricreazione del token."));
+            return;
+        }
+
+        res.send(messages.success("Login completato",{
+            username: user.username,
+            token: token.value
+        }));
+    });
+
     router.get("/.well-known/assetlinks.json",(req,res)=>{
         res.send([{
             relation: ["delegate_permission/common.handle_all_urls"],
             target: {
                 namespace: "android_app",
                 package_name: "com.micheletagliabue.letsmemory",
-                sha256_cert_fingerprints: ["prova"]
+                sha256_cert_fingerprints: [config.SHA256_ANDRID_CERT]
             }
         }]);
+    });
+
+    router.get("/.well-known/apple-app-site-association",(req,res)=>{
+       res.send({
+           "applinks": {
+               "apps": [],
+               "details": [
+                   {
+                       "appID": "ABCD1234.com.micheletagliabue.letsmemory",
+                       "paths": [ "*" ]
+                   }
+               ]
+           }
+       });
     });
 
     return router;

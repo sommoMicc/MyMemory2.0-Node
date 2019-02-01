@@ -1,14 +1,16 @@
 module.exports = {
-    success : (text) => {
+    success : (text,data=null) => {
         return {
             status: "success",
-            message: text
+            message: text,
+            data: data
         }
     },
-    error: (text) => {
+    error: (text,data=null) => {
         return {
             status: "error",
-            message: text
+            message: text,
+            data: data
         }
     }
 };
