@@ -17,7 +17,6 @@ module.exports = (dbConnection) => {
 
     router.post('/signup', async (req, res) => {
         try{
-            console.log(req.body);
             let email = req.body.email;
             if(email == null || email.trim().length === 0) {
                 res.send(messages.error("Inserire una email valida"));
@@ -48,7 +47,6 @@ module.exports = (dbConnection) => {
                     "registrazione. Per favore riprova più tardi."));
                 return;
             }
-            console.log(newUser);
             const platform = req.body.platform.trim().toUpperCase();
 
             let token = await Token.generate(newUser.ID);
@@ -57,8 +55,6 @@ module.exports = (dbConnection) => {
                     "registrazione 2. Per favore riprova più tardi."));
                 return;
             }
-            console.log(token);
-
             LetsMemoryMailer.sendSignupMail(newUser.email,platform,token.value,(e,r)=>{
                 if(e) {
                     res.send(messages.error("Si è verificato un problema tecnico nella " +
@@ -108,7 +104,6 @@ module.exports = (dbConnection) => {
                 "login. Per favore riprova più tardi."));
             return;
         }
-        console.log(token);
 
         LetsMemoryMailer.sendLoginMail(user.email,platform,token.value,(e,r)=>{
             if(e) {
@@ -153,8 +148,6 @@ module.exports = (dbConnection) => {
             token: token.value
         });
 
-        console.log(response);
-        
         res.send(response);
     });
 

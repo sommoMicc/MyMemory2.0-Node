@@ -27,6 +27,9 @@ module.exports = (db) => {
 
         async getUser() {
             let relatedUser = new User(this.user_id,null,null);
+            if(this.user_id == null)
+                await this.load();
+
             await relatedUser.load();
             return relatedUser;
         }

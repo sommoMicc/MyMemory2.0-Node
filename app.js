@@ -12,7 +12,6 @@ var indexRouter = require('./routes/index');
 
 var app = express();
 var http = require("http").Server(app);
-require("./websocket")(http,dbConnection);
 
 
 app.use(logger('dev'));
@@ -31,7 +30,8 @@ dbConnection.connect().then((a,b) => {
         app.use(function(err, req, res, next) {
             console.error(err.stack);
             res.status(500).send(messages.error(err));
-        })
+        });
+        require("./websocket")(http,dbConnection);
     }
 }).catch((a)=> {
     console.log("Errore di connessione al database");
