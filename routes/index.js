@@ -138,10 +138,7 @@ module.exports = (dbConnection) => {
         }
         //Ricreo un nuovo token "definitivo"
         await token.load();
-        console.log("Token: ");
-        console.log(token);
         let user = await token.getUser();
-        console.log(user);
         //Pulisco tutti i vecchi token e ne ricreo un altro
         await Token.cleanTokens(user.ID);
         token = await Token.generate(user.ID);
@@ -151,10 +148,14 @@ module.exports = (dbConnection) => {
             return;
         }
 
-        res.send(messages.success("Login completato",{
+        const response = messages.success("Login completato",{
             username: user.username,
             token: token.value
-        }));
+        });
+
+        console.log(response);
+        
+        res.send(response);
     });
 
     router.get("/.well-known/assetlinks.json",(req,res)=>{

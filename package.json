@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon ./bin/www",
+    "start": "nodemon app.js",
     "test": "nyc mocha --require babel-polyfill --require babel-register --recursive --timeout 120000 test/*/*.js"
   },
   "dependencies": {
