@@ -14,13 +14,16 @@ module.exports = (http,db) => {
 
         socket.on("disconnect",()=>{
             console.log("User disconnected");
-            let userDisconnected = socketsConnected[socket];
-            if(userDisconnected != null)
-                io.to(userDisconnected.username).emit("userDisconnected",
+            let userDisconnected = socketsConnected[socket.id];
+            if(userDisconnected != null) {
+                io.to("user-" + userDisconnected.username).emit("userDisconnected",
                     userDisconnected.username);
-
-            delete usersConnected[userDisconnected];
-            delete socketsConnected[socket];
+            }
+            else {
+                console.log("Si è disconnesso un utente non loggato");
+            }
+            delete usersConnected[userDisconnected.username];
+            delete socketsConnected[socket.id];
         });
         socket.on("login", async (tokenValue) => {
             let token = new Token(tokenValue);
@@ -33,8 +36,8 @@ module.exports = (http,db) => {
                 await token.load();
                 let connectedUser = await token.getUser();
 
-                usersConnected[connectedUser] = socket;
-                socketsConnected[socket] = connectedUser;
+                usersConnected[connectedUser.username] = socket;
+                socketsConnected[socket.id] = connectedUser;
                 username = connectedUser.username;
                 resultMessage = messages.success(connectedUser.username);
             }
@@ -44,19 +47,21 @@ module.exports = (http,db) => {
             }
             socket.emit("loginResponse",resultMessage);
             if(username.length > 0)
-                io.to(username).emit("userConnected",username);
+                io.in("user-"+username).emit("userConnected",username);
         });
         socket.on("search", async (searchParameter) => {
             console.log("Risultati ricerca: ");
+            let currentUser = socketsConnected[socket.id];
             try {
                 for(let i=0;i<socket.previousSearchResults.length;i++) {
                     let x = socket.previousSearchResults[i];
-                    socket.leave(x.username,null);
-                    console.log("Lascio stanza "+x.username);
+                    socket.leave(x.username,()=>{
+                        console.log("Lascio stanza "+x.username);
+                    });
                 }
-                let users = await User.query(searchParameter);
+                let users = await User.query(searchParameter,currentUser);
                 for(let i=0;i<users.length;i++) {
-                    if(users[i] in usersConnected) {
+                    if(users[i].username in usersConnected) {
                         users[i]["online"] = true;
                     }
                     else {
@@ -70,9 +75,9 @@ module.exports = (http,db) => {
                     }));
                 //Emit prima di questo ciclo così intanto mando avanti i risultati
                 for(let i=0;i<users.length;i++) {
-                    socket.join(users[i].username);
-                    console.log("Joino stanza "+users[i].username);
-                    console.log(socket.rooms);
+                    socket.join("user-"+users[i].username,()=>{
+                        console.log(socket.rooms);
+                    });
                 }
                 socket.previousSearchResults = users;
             }
@@ -80,15 +85,37 @@ module.exports = (http,db) => {
                 console.log(e);
             }
         });
-        socket.on("leaveUsersRoom", async (roomsToLeave) => {
-            socket.isLeavingRooms = true;
-            roomsToLeave = JSON.parse(roomsToLeave);
-            for(let i=0;i<roomsToLeave.length;i++) {
-                socket.leave(roomsToLeave[i],()=>{
-                   console.log("Room left: "+roomsToLeave);
+
+        socket.on("sendChallenge",async (username)=>{
+            console.log("Ricevuta challenge dal socket: "+socket.id);
+
+            let otherUsername = socketsConnected[socket.id].username;
+            let challengedUserSocket = usersConnected[username];
+            challengedUserSocket.emit("wannaChallenge",otherUsername);
+            console.log("Invio challenge a "+otherUsername+" col socket "+challengedUserSocket.id);
+        });
+
+        socket.on("challengeAccepted", async (username)=>{
+            console.log(username+" ha accettato la sfida");
+            const roomToJoin = "game-"+username+"-"
+                +socketsConnected[socket.id].username;
+
+            socket.join(roomToJoin,async ()=>{
+                usersConnected[username].join(roomToJoin,()=>{
+                    io.in(roomToJoin).emit("beginGame");
                 });
-            }
-            socket.isLeavingRooms = false;
+            });
+        });
+
+
+        socket.on("challengeDenided", async (username)=>{
+            let userWhoDenidedChallenge = socketsConnected[socket.id];
+            console.log(userWhoDenidedChallenge.username+" ha rifiutato " +
+                "la sfida di "+username);
+
+            let userWhoSentChallengeSocket = usersConnected[username];
+            userWhoSentChallengeSocket.emit("challengeDenided",
+                userWhoDenidedChallenge.username)
         });
     });
 };
