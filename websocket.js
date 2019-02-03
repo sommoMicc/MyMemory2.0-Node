@@ -19,15 +19,7 @@ module.exports = (http,db) => {
             if(userDisconnected != null) {
                 io.to("user-" + userDisconnected.username).emit("userDisconnected",
                     userDisconnected.username);
-
-                console.log("Stanze in cui costui era connesso:");
-                for(let room in socket.rooms) {
-                    if(room.startsWith("game-")) {
-                        socket.leave(room,() => {
-                            io.to(room).emit("adversaryLeft");
-                        });
-                    }
-                }
+                leaveGame(socket);
             }
             else {
                 console.log("Si è disconnesso un utente non loggato");
@@ -133,8 +125,24 @@ module.exports = (http,db) => {
             userWhoSentChallengeSocket.emit("challengeDenided",
                 userWhoDenidedChallenge.username)
         });
+
+        socket.on("leaveGame",() => {
+            leaveGame(socket);
+        });
     });
+    
+    function leaveGame(socket) {
+        for(let room in socket.rooms) {
+            if(room.startsWith("game-")) {
+                socket.leave(room,() => {
+                    io.to(room).emit("adversaryLeft");
+                });
+            }
+        }
+    }
+
 };
+
 
 function generateRandomCards() {
     const cardsNumber = 12;
