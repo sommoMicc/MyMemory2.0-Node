@@ -118,5 +118,25 @@ module.exports = (db) => {
             });
 
         }
+
+        static async query(parameter) {
+            return new Promise((resolve,reject) => {
+                db.query("SELECT * FROM users WHERE username LIKE ? OR " +
+                    "email LIKE ? ORDER BY username ASC, email ASC",
+                    [parameter+"%", parameter+"%"], (err,result) => {
+                        if(err) return reject(err);
+                        let users = [];
+                        for(let i=0;i<result.length;i++)
+                            users.push(
+                                new User(
+                                    result[0].ID,
+                                    result[0].username,
+                                    result[0].email
+                                )
+                            );
+                        resolve(users);
+                    });
+            });
+        }
     }
 };

@@ -37,5 +37,27 @@ module.exports = (http,db) => {
             }
             socket.emit("loginResponse",resultMessage);
         });
+        socket.on("search", async (searchParameter) => {
+            console.log("Risultati ricerca: ");
+            try {
+                let users = await User.query(searchParameter);
+                for(let i=0;i<users.length;i++) {
+                    if(users[i] in usersConnected) {
+                        users[i]["online"] = true;
+                    }
+                    else {
+                        users[i]["online"] = false;
+                    }
+                }
+                console.log(users);
+                socket.emit("searchResult",
+                    messages.success("Ricerca completata",{
+                        users: users
+                    }));
+            }
+            catch(e) {
+                console.log(e);
+            }
+        });
     });
 };
