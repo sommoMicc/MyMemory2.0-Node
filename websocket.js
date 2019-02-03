@@ -12,12 +12,22 @@ module.exports = (http,db) => {
         console.log("A user connected");
         socket.previousSearchResults = [];
 
-        socket.on("disconnect",()=>{
+        socket.on("disconnecting",()=>{
             console.log("User disconnected");
+
             let userDisconnected = socketsConnected[socket.id];
             if(userDisconnected != null) {
                 io.to("user-" + userDisconnected.username).emit("userDisconnected",
                     userDisconnected.username);
+
+                console.log("Stanze in cui costui era connesso:");
+                for(let room in socket.rooms) {
+                    if(room.startsWith("game-")) {
+                        socket.leave(room,() => {
+                            io.to(room).emit("adversaryLeft");
+                        });
+                    }
+                }
             }
             else {
                 console.log("Si è disconnesso un utente non loggato");
@@ -102,7 +112,13 @@ module.exports = (http,db) => {
 
             socket.join(roomToJoin,async ()=>{
                 usersConnected[username].join(roomToJoin,()=>{
-                    io.in(roomToJoin).emit("beginGame");
+
+                    io.in(roomToJoin).emit("beginGame",messages.success(
+                        roomToJoin.substr(5),
+                        {
+                            cards: generateRandomCards()
+                        }
+                    ));
                 });
             });
         });
@@ -119,3 +135,48 @@ module.exports = (http,db) => {
         });
     });
 };
+
+function generateRandomCards() {
+    const cardsNumber = 12;
+    let symbols = ["a","b","c","d","e","f","g","h","i","j","k","l",
+        "m","n","o","p","q","r","s","t","u","v","w","x","y","z","!","?"];
+
+    let availableColors = [
+        0x5c007a,0x280680,0xac1900,0x000000,0x01579b,
+        0x004d40,0x3d5afe,0x880e4f];
+
+    shuffleArray(symbols);
+    shuffleArray(symbols);
+    shuffleArray(symbols);
+    shuffleArray(symbols);
+    shuffleArray(symbols);
+
+    shuffleArray(availableColors);
+    shuffleArray(availableColors);
+    shuffleArray(availableColors);
+    shuffleArray(availableColors);
+    shuffleArray(availableColors);
+    shuffleArray(availableColors);
+
+    let cards = [];
+    for(let i = 0;i<cardsNumber/2; i++) {
+        for(let j=0;j<2;j++) {
+            cards.push({
+                letter: symbols[i].toUpperCase(),
+                color: availableColors[i]
+            });
+        }
+    }
+
+    shuffleArray(cards);
+    shuffleArray(cards);
+    shuffleArray(cards);
+    return cards;
+}
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
