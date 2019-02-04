@@ -14,6 +14,10 @@ module.exports = (dbConnection) => {
     router.get('/login', (req, res) => {
         res.send("TODO!")
     });
+    router.get('/login/do', (req, res) => {
+        res.send("Per favore, apri questo link dal" +
+            " cellulare in cui è installata l'app");
+    });
 
     router.post('/signup', async (req, res) => {
         try{
