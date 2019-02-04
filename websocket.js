@@ -54,7 +54,6 @@ module.exports = (http,db) => {
                 io.in("user-"+username).emit("userConnected",username);
         });
         socket.on("search", async (searchParameter) => {
-            console.log("Risultati ricerca: ");
             let currentUser = socketsConnected[socket.id];
             try {
                 for(let i=0;i<socket.previousSearchResults.length;i++) {
@@ -72,7 +71,6 @@ module.exports = (http,db) => {
                         users[i]["online"] = false;
                     }
                 }
-                console.log(users);
                 socket.emit("searchResult",
                     messages.success("Ricerca completata",{
                         users: users

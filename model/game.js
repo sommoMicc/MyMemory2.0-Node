@@ -33,24 +33,32 @@ module.exports = class Game {
                         this.players[i].socket
                             .to(this.room).emit("adversaryCardFlipped",index);
 
+                        console.log("Flipped: "+this.players[i].lastCardFlipped+" , "+index);
                         if(this.players[i].lastCardFlipped == null) {
                             this.players[i].lastCardFlipped = index;
                         }
                         else {
                             if(this.players[i].lastCardFlipped !== index) {
+                                console.log("LastCardFlipped != index");
                                 let lastCardFlipped = this.cards[
                                     this.players[i].lastCardFlipped];
 
                                 if (lastCardFlipped.letter ===
-                                    this.cards[index].lastCardFlipped) {
+                                    this.cards[index].letter) {
+                                    console.log("Registrato punto");
                                     //Ha fatto punto!!
                                     this.players[i].score++;
-                                    this.checkIfGameFinished();
+                                    this.players[i].lastCardFlipped = null;
+                                }
+                                else {
+                                    setTimeout(()=> {
+                                        this.changeTurn();
+                                    },500);
+                                    console.log("Lettere diverse: "+lastCardFlipped.letter+
+                                        " e "+this.cards[index].letter);
                                 }
                             }
-                            setTimeout(()=> {
-                                this.changeTurn();
-                            },1000);
+                            this.checkIfGameFinished();
                         }
                         console.log("cardFlipped: "+index);
                     });
@@ -101,8 +109,11 @@ module.exports = class Game {
     checkIfGameFinished() {
         let totalScore = 0;
         this.players.forEach((player)=>{
+            console.log("Player score: "+player.score);
             totalScore += player.score;
         });
+
+        console.log("Total score: "+totalScore);
 
         if(totalScore >= 6) {
             let winner = this.players[0].score > this.players[1].score ?
@@ -110,7 +121,16 @@ module.exports = class Game {
             //Trovate 6 coppie, gioco terminato
             this.io.to(this.room).emit("gameFinished",winner);
             console.log("Game finished");
+
+            this.players.forEach((player)=>{
+                player.socket.leave(this.room);
+                Game.deleteGameListener(player.socket);
+            });
+
+
+            return true;
         }
+        return false;
     }
 
     static generateRandomCards() {
@@ -166,9 +186,15 @@ module.exports = class Game {
         Game._leaveAllGameRecursive(gameRoom,gamesActive,socket,callback)
     }
 
+    static deleteGameListener(socket) {
+        socket.removeAllListeners("cardFlipped");
+        socket.removeAllListeners("cardHidden");
+    }
+
     static _leaveAllGameRecursive(gameRoom,gamesActive,socket,callback) {
         if(gameRoom == null) {
-            callback();
+            if(callback!= null)
+                callback();
             return;
         }
         if(gamesActive[gameRoom] != null) {
@@ -177,8 +203,7 @@ module.exports = class Game {
                 console.log("Chiamato leave su room "+gameRoom);
 
                 gamesActive[gameRoom].players.forEach((player) => {
-                    player.socket.removeAllListeners("cardFlipped");
-                    player.socket.removeAllListeners("cardHidden");
+                    Game.deleteGameListener(player.socket);
                 });
                 delete gamesActive[gameRoom];
                 gameRoom = this.getGameRoom(socket);

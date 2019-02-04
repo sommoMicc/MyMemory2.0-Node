@@ -101,7 +101,7 @@ module.exports = (db) => {
                     [this.username, this.email], (err, result) => {
                         if(err) return reject(err);
                         console.log("Risultato insert user");
-                        console.log(result);
+                        //console.log(result);
                         this.ID = result.insertId;
                         resolve(true);
                     });
@@ -121,7 +121,7 @@ module.exports = (db) => {
 
         static async query(parameter,userToIgnore) {
             return new Promise((resolve,reject) => {
-                db.query("SELECT * FROM users WHERE (username LIKE ? OR email " +
+                db.query("SELECT DISTINCT * FROM users WHERE (username LIKE ? OR email " +
                     "LIKE ?) AND username <> ? ORDER BY username ASC, email ASC",
                     [parameter+"%", parameter+"%", userToIgnore.username],
                     (err,result) => {
@@ -130,9 +130,9 @@ module.exports = (db) => {
                         for(let i=0;i<result.length;i++)
                             users.push(
                                 new User(
-                                    result[0].ID,
-                                    result[0].username,
-                                    result[0].email
+                                    result[i].ID,
+                                    result[i].username,
+                                    result[i].email
                                 )
                             );
                         resolve(users);
