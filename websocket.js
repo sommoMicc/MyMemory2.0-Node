@@ -21,20 +21,12 @@ module.exports = (http,db) => {
             if(userDisconnected != null) {
                 io.to("user-" + userDisconnected.username).emit("userDisconnected",
                     userDisconnected.username);
-
-                for(let room in socket.rooms) {
-                    if(room.startsWith("game-")) {
-                        if(gamesActive[room] != null)
-                            gamesActive[room].leave(socket,()=>{
-                                delete gamesActive[room];
-                            });
-                    }
-                }
+                Game.leaveAllGames(gamesActive,socket);
+                delete usersConnected[userDisconnected.username];
+                delete socketsConnected[socket.id];
             }
             else {
                 console.log("Si è disconnesso un utente non loggato");
-                delete usersConnected[userDisconnected.username];
-                delete socketsConnected[socket.id];
             }
         });
         socket.on("login", async (tokenValue) => {
@@ -118,15 +110,20 @@ module.exports = (http,db) => {
                 username: username,
                 socket:  usersConnected[username],
             };
-
-            let newGame = new Game(io,firstPlayer,secondPlayer);
-            newGame.begin();
-            gamesActive[newGame.room] = newGame;
+            Game.leaveAllGames(gamesActive,socket,()=>{
+                let newGame = new Game(io,firstPlayer,secondPlayer);
+                gamesActive[newGame.room] = newGame;
+                newGame.begin();
+                console.log(gamesActive);
+            });
         });
 
 
         socket.on("challengeDenided", async (username)=>{
             let userWhoDenidedChallenge = socketsConnected[socket.id];
+            if(userWhoDenidedChallenge == null)
+                return;
+
             console.log(userWhoDenidedChallenge.username+" ha rifiutato " +
                 "la sfida di "+username);
 
@@ -136,13 +133,11 @@ module.exports = (http,db) => {
         });
 
         socket.on("leaveGame",() => {
-            for(let room in socket.rooms) {
-                if(room.startsWith("game-")) {
-                    gamesActive[room].leave(socket,()=>{
-                        delete gamesActive[room];
-                    });
-                }
-            }
+            console.log(socket.rooms);
+            Game.leaveAllGames(gamesActive,socket,()=>{
+                console.log(socket.rooms);
+                console.log("User left game");
+            })
         });
     });
 };
