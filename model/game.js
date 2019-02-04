@@ -116,8 +116,11 @@ module.exports = class Game {
         console.log("Total score: "+totalScore);
 
         if(totalScore >= 6) {
-            let winner = this.players[0].score > this.players[1].score ?
-                this.players[0].username : this.players[1].username;
+            let winner = "";
+            if(this.players[0].score !== this.players[1].score) {
+                winner = this.players[0].score > this.players[1].score ?
+                    this.players[0].username : this.players[1].username;
+            }
             //Trovate 6 coppie, gioco terminato
             this.io.to(this.room).emit("gameFinished",winner);
             console.log("Game finished");
