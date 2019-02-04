@@ -1,4 +1,5 @@
 const messages = require("./model/communications/message");
+const Game = require("./model/game");
 
 module.exports = (http,db) => {
     const io = require("socket.io")(http);
@@ -7,6 +8,7 @@ module.exports = (http,db) => {
 
     let usersConnected = [];
     let socketsConnected = [];
+    let gamesActive = [];
 
     io.on("connection",(socket)=>{
         console.log("A user connected");
@@ -19,13 +21,21 @@ module.exports = (http,db) => {
             if(userDisconnected != null) {
                 io.to("user-" + userDisconnected.username).emit("userDisconnected",
                     userDisconnected.username);
-                leaveGame(socket);
+
+                for(let room in socket.rooms) {
+                    if(room.startsWith("game-")) {
+                        if(gamesActive[room] != null)
+                            gamesActive[room].leave(socket,()=>{
+                                delete gamesActive[room];
+                            });
+                    }
+                }
             }
             else {
                 console.log("Si è disconnesso un utente non loggato");
+                delete usersConnected[userDisconnected.username];
+                delete socketsConnected[socket.id];
             }
-            delete usersConnected[userDisconnected.username];
-            delete socketsConnected[socket.id];
         });
         socket.on("login", async (tokenValue) => {
             let token = new Token(tokenValue);
@@ -99,20 +109,19 @@ module.exports = (http,db) => {
 
         socket.on("challengeAccepted", async (username)=>{
             console.log(username+" ha accettato la sfida");
-            const roomToJoin = "game-"+username+"-"
-                +socketsConnected[socket.id].username;
+            //Inizio gioco
+            let firstPlayer = {
+                username: socketsConnected[socket.id].username,
+                socket: socket
+            };
+            let secondPlayer = {
+                username: username,
+                socket:  usersConnected[username],
+            };
 
-            socket.join(roomToJoin,async ()=>{
-                usersConnected[username].join(roomToJoin,()=>{
-
-                    io.in(roomToJoin).emit("beginGame",messages.success(
-                        roomToJoin.substr(5),
-                        {
-                            cards: generateRandomCards()
-                        }
-                    ));
-                });
-            });
+            let newGame = new Game(io,firstPlayer,secondPlayer);
+            newGame.begin();
+            gamesActive[newGame.room] = newGame;
         });
 
 
@@ -127,64 +136,13 @@ module.exports = (http,db) => {
         });
 
         socket.on("leaveGame",() => {
-            leaveGame(socket);
+            for(let room in socket.rooms) {
+                if(room.startsWith("game-")) {
+                    gamesActive[room].leave(socket,()=>{
+                        delete gamesActive[room];
+                    });
+                }
+            }
         });
     });
-    
-    function leaveGame(socket) {
-        for(let room in socket.rooms) {
-            if(room.startsWith("game-")) {
-                socket.leave(room,() => {
-                    io.to(room).emit("adversaryLeft");
-                });
-            }
-        }
-    }
-
 };
-
-
-function generateRandomCards() {
-    const cardsNumber = 12;
-    let symbols = ["a","b","c","d","e","f","g","h","i","j","k","l",
-        "m","n","o","p","q","r","s","t","u","v","w","x","y","z","!","?"];
-
-    let availableColors = [
-        0x5c007a,0x280680,0xac1900,0x000000,0x01579b,
-        0x004d40,0x3d5afe,0x880e4f];
-
-    shuffleArray(symbols);
-    shuffleArray(symbols);
-    shuffleArray(symbols);
-    shuffleArray(symbols);
-    shuffleArray(symbols);
-
-    shuffleArray(availableColors);
-    shuffleArray(availableColors);
-    shuffleArray(availableColors);
-    shuffleArray(availableColors);
-    shuffleArray(availableColors);
-    shuffleArray(availableColors);
-
-    let cards = [];
-    for(let i = 0;i<cardsNumber/2; i++) {
-        for(let j=0;j<2;j++) {
-            cards.push({
-                letter: symbols[i].toUpperCase(),
-                color: availableColors[i]
-            });
-        }
-    }
-
-    shuffleArray(cards);
-    shuffleArray(cards);
-    shuffleArray(cards);
-    return cards;
-}
-
-function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-}
