@@ -2,7 +2,7 @@ const messages = require("./model/communications/message");
 const Game = require("./model/game");
 
 module.exports = (http,db) => {
-    const io = require("socket.io")(http,{'pingInterval': 8000});
+    const io = require("socket.io")(http,{'pingTimeout':159000,'pingInterval': 9999999});
     const Token = require("./model/db/token")(db.connection);
     const User = require("./model/db/user")(db.connection);
 
@@ -13,6 +13,16 @@ module.exports = (http,db) => {
     io.on("connection",(socket)=>{
         console.log("A user connected");
         socket.previousSearchResults = [];
+
+        socket.on("ping2",() => {
+            console.log("Ricevuto ping");
+            setInterval(() => socket.emit("pong2"),
+            1000);
+        });
+
+        socket.conn.on("packet",(packet)=>{
+            if(packet.type === 'ping')  console.log("Ricevuto ping");
+        });
 
         socket.on("disconnecting",()=>{
             console.log("User disconnected");
