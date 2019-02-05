@@ -2,7 +2,7 @@ const messages = require("./model/communications/message");
 const Game = require("./model/game");
 
 module.exports = (http,db) => {
-    const io = require("socket.io")(http);
+    const io = require("socket.io")(http,{'pingInterval': 8000});
     const Token = require("./model/db/token")(db.connection);
     const User = require("./model/db/user")(db.connection);
 
