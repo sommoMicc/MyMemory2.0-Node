@@ -190,8 +190,10 @@ module.exports = class Game {
     }
 
     static deleteGameListener(socket) {
-        socket.removeAllListeners("cardFlipped");
-        socket.removeAllListeners("cardHidden");
+        if(socket != null) {
+            socket.removeAllListeners("cardFlipped");
+            socket.removeAllListeners("cardHidden");
+        }
     }
 
     static _leaveAllGameRecursive(gameRoom,gamesActive,socket,callback) {
