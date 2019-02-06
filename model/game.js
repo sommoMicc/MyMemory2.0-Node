@@ -18,6 +18,13 @@ module.exports = class Game {
         }
     }
 
+    updateSocket(username,socket) {
+        for(let i=0;i<this.players.length;i++) {
+            if(this.players[i].username === username)
+                this.players[i].socket = socket;
+        }
+    }
+
     begin() {
         this.cards = Game.generateRandomCards();
         this.players[0].socket.join(this.room,async ()=>{
